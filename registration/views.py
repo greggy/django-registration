@@ -5,6 +5,7 @@ Views which allow users to create and activate accounts.
 
 
 from django.conf import settings
+from django.contrib.auth import login, authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -61,6 +62,13 @@ def activate(request, activation_key,
     
     """
     activation_key = activation_key.lower() # Normalize before trying anything with it.
+    try:
+        user_account = RegistrationProfile.objects.get(activation_key=activation_key)
+    except RegistrationProfile.DoesNotExist:
+        pass
+    else:
+        user_account.user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user_account.user)
     account = RegistrationProfile.objects.activate_user(activation_key)
     if extra_context is None:
         extra_context = {}
